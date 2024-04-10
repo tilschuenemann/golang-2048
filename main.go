@@ -78,7 +78,7 @@ func main() {
 			gbm.AddNewTile()
 
 			drawGameBoard(s, gbm.Gb)
-			drawMenu(s, gbm.Score, string(ev.Rune()))
+			drawMenu(s, gbm.Score)
 
 		}
 	}
@@ -206,7 +206,7 @@ func drawGameBoard(s tcell.Screen, gb [4][4]int) {
 }
 
 // drawMenu draws the menu onto the screen.
-func drawMenu(s tcell.Screen, score int, input string) {
+func drawMenu(s tcell.Screen, score int) {
 
 	controls := []string{
 		"Controls:",
@@ -219,12 +219,6 @@ func drawMenu(s tcell.Screen, score int, input string) {
 		"",
 		"Current Score:",
 		fmt.Sprintf("%5d", score),
-		"",
-	}
-
-	if input != "" {
-		controls = append(controls, "Last input:")
-		controls = append(controls, input)
 	}
 
 	for i, text := range controls {
