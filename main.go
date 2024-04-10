@@ -154,7 +154,7 @@ func drawTile(s tcell.Screen, x, y, value int) {
 	var bgColor tcell.Color
 	switch value {
 	case 0:
-		bgColor = tcell.ColorLightBlue
+		bgColor = tcell.ColorReset
 	case 1:
 		bgColor = tcell.ColorLightCoral
 	case 2:
