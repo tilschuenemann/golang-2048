@@ -16,8 +16,10 @@ import (
 const (
 	GameBoardX = 1
 	GameBoardY = 1
-	MenuX      = 30
+	MenuX      = 29 + 2
 	MenuY      = 1
+	DebugMenuX = 29 + 2
+	DebugMenuY = 10
 	TileWidth  = 7
 	TileHeight = 4
 	GridDim    = 1
@@ -78,7 +80,8 @@ func main() {
 			gbm.AddNewTile()
 
 			drawGameBoard(s, gbm.Gb)
-			drawMenu(s, gbm.Score)
+			drawMenu(s, gbm)
+			drawDebugMenu(s, gbm)
 
 		}
 	}
@@ -206,19 +209,42 @@ func drawGameBoard(s tcell.Screen, gb [4][4]int) {
 }
 
 // drawMenu draws the menu onto the screen.
-func drawMenu(s tcell.Screen, score int) {
-
+func drawMenu(s tcell.Screen, gbm *gameboard.GameBoardModel) {
 	controls := []string{
 		"Controls:",
 		"[q] to quit",
 		"arrow keys to move",
 		"",
 		"Current Score:",
-		fmt.Sprintf("%5d", score),
+		fmt.Sprintf("%5d", gbm.Score),
+		"",
+	}
+
+	var gameState string
+	if gbm.HasWon {
+		gameState = "You won!"
+	} else if !gbm.HasWon && !gbm.HasEmptyTile && !gbm.IsMergable {
+		gameState = "You lose!"
+	}
+	if gameState != "" {
+		controls = append(controls, fmt.Sprintf(" %s", gameState))
 	}
 
 	for i, text := range controls {
 		drawText(s, MenuX, MenuY+i, text)
 	}
 
+}
+
+func drawDebugMenu(s tcell.Screen, gbm *gameboard.GameBoardModel) {
+	controls := []string{
+		"Debug info:",
+		fmt.Sprintf("HasWon: %t", gbm.HasWon),
+		fmt.Sprintf("IsMergable: %t", gbm.IsMergable),
+		fmt.Sprintf("HasEmptyTile: %t", gbm.HasEmptyTile),
+	}
+
+	for i, text := range controls {
+		drawText(s, DebugMenuX, DebugMenuY+i, text)
+	}
 }
