@@ -69,7 +69,7 @@ func main() {
 				return
 			}
 
-			moved, ok := gbm.Move(ev.Rune())
+			moved, ok := gbm.Move(ev.Key())
 			if !moved || !ok {
 				continue
 			}
@@ -211,11 +211,7 @@ func drawMenu(s tcell.Screen, score int) {
 	controls := []string{
 		"Controls:",
 		"[q] to quit",
-		"",
-		"[u] to move up",
-		"[d] to move down",
-		"[l] to move left",
-		"[r] to move right",
+		"arrow keys to move",
 		"",
 		"Current Score:",
 		fmt.Sprintf("%5d", score),

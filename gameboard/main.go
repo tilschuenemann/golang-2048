@@ -3,6 +3,8 @@ package gameboard
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 type GameBoardModel struct {
@@ -47,30 +49,22 @@ const (
 	Right
 )
 
-func (gbm *GameBoardModel) Move(input rune) (bool, bool) {
-
-	validInput := false
-	validRunes := []rune{'u', 'd', 'l', 'r'}
-	for _, r := range validRunes {
-		if input == r {
-			validInput = true
-			break
-		}
-	}
-
-	if !validInput {
-		return false, validInput
-	}
-
+func (gbm *GameBoardModel) Move(input tcell.Key) (bool, bool) {
 	var tilt bool
 	var reverse bool
-
-	if input == 'u' || input == 'd' {
+	switch input {
+	case tcell.KeyUp:
 		tilt = true
-	}
-
-	if input == 'l' || input == 'd' {
+	case tcell.KeyDown:
+		tilt = true
 		reverse = true
+	case tcell.KeyLeft:
+		reverse = true
+	case tcell.KeyRight:
+		tilt = false
+		reverse = false
+	default:
+		return false, false
 	}
 
 	if tilt {
@@ -84,7 +78,7 @@ func (gbm *GameBoardModel) Move(input rune) (bool, bool) {
 		gbm.tilt(true)
 	}
 
-	return shifted || merged || shifted_again, validInput
+	return shifted || merged || shifted_again, true
 
 }
 
