@@ -167,7 +167,7 @@ func (gbm *GameBoardModel) mergeAdjacentHorizontal(reverse bool) bool {
 
 func (gbm *GameBoardModel) AddNewTile() {
 	var emptyTiles []*int
-	value := 1 << 2
+	value := 1 << 1
 	for y := 0; y <= 3; y++ {
 		for x := 0; x <= 3; x++ {
 			if gbm.Gb[y][x] == 0 {
