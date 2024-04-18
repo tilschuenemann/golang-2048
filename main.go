@@ -53,7 +53,7 @@ func main() {
 	// setup gameboard model
 	gbm := gameboard.New()
 
-	for !gbm.HasWon || gbm.IsMergable || gbm.HasEmptyTile {
+	for {
 		s.Show()
 
 		ev := s.PollEvent()
@@ -71,20 +71,16 @@ func main() {
 				return
 			}
 
-			moved, ok := gbm.Move(ev.Key())
-			if !moved || !ok {
-				continue
-			}
-
-			gbm.CheckIsMergable()
-			gbm.AddNewTile()
-
-			drawGameBoard(s, gbm.Gb)
+			drawGameBoard(s, gbm)
 			drawMenu(s, gbm)
 			drawDebugMenu(s, gbm)
 
+			gbm.MoveWrapper(ev.Key())
+
 		}
+
 	}
+
 }
 
 func drawSplashScreen(s tcell.Screen) {
@@ -198,10 +194,10 @@ func drawTile(s tcell.Screen, x, y, value int) {
 
 }
 
-func drawGameBoard(s tcell.Screen, gb [4][4]int) {
+func drawGameBoard(s tcell.Screen, gbm *gameboard.GameBoardModel) {
 	for y := 0; y <= 3; y++ {
 		for x := 0; x <= 3; x++ {
-			drawTile(s, GameBoardX+x*TileWidth, GameBoardY+y*TileHeight, gb[y][x])
+			drawTile(s, GameBoardX+x*TileWidth, GameBoardY+y*TileHeight, gbm.Gb[y][x])
 		}
 
 	}
@@ -221,14 +217,13 @@ func drawMenu(s tcell.Screen, gbm *gameboard.GameBoardModel) {
 	}
 
 	var gameState string
-	if gbm.HasWon {
+	switch gbm.GetState() {
+	case gameboard.Won:
 		gameState = "You won!"
-	} else if !gbm.HasWon && !gbm.HasEmptyTile && !gbm.IsMergable {
+	case gameboard.Lost:
 		gameState = "You lose!"
 	}
-	if gameState != "" {
-		controls = append(controls, fmt.Sprintf(" %s", gameState))
-	}
+	controls = append(controls, fmt.Sprintf(" %s", gameState))
 
 	for i, text := range controls {
 		drawText(s, MenuX, MenuY+i, text)
@@ -239,9 +234,9 @@ func drawMenu(s tcell.Screen, gbm *gameboard.GameBoardModel) {
 func drawDebugMenu(s tcell.Screen, gbm *gameboard.GameBoardModel) {
 	controls := []string{
 		"Debug info:",
-		fmt.Sprintf("HasWon: %t", gbm.HasWon),
-		fmt.Sprintf("IsMergable: %t", gbm.IsMergable),
-		fmt.Sprintf("HasEmptyTile: %t", gbm.HasEmptyTile),
+		fmt.Sprintf("State: %v", gbm.GetState()),
+		fmt.Sprintf("IsMergable: %t", gbm.IsMergable()),
+		fmt.Sprintf("HasEmptyTile: %t", gbm.HasEmptyTile()),
 	}
 
 	for i, text := range controls {

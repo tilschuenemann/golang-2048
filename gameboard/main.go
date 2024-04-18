@@ -1,28 +1,29 @@
 package gameboard
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/gdamore/tcell/v2"
 )
 
+type State int
+
+const (
+	Ongoing State = iota
+	Won
+	Lost
+)
+
 type GameBoardModel struct {
-	Gb           [4][4]int
-	Score        int
-	HasWon       bool
-	IsMergable   bool
-	HasEmptyTile bool
+	Gb    [4][4]int
+	Score int
 }
 
 // New creates a new GameBoardModel.
 func New() *GameBoardModel {
 
 	gbm := GameBoardModel{
-		Score:        0,
-		HasWon:       false,
-		IsMergable:   true,
-		HasEmptyTile: true,
+		Score: 0,
 	}
 
 	for y := 0; y <= 3; y++ {
@@ -40,18 +41,26 @@ func New() *GameBoardModel {
 	return &gbm
 }
 
-type Direction int
+func (gbm *GameBoardModel) MoveWrapper(input tcell.Key) {
 
-const (
-	Up Direction = iota
-	Down
-	Left
-	Right
-)
+	if gbm.GetState() != Ongoing {
+		return
+	}
+	moved, ok := gbm.Move(input)
+	if !ok {
+		return
+	}
+
+	if !moved {
+		return
+	}
+
+	gbm.AddTile()
+
+}
 
 func (gbm *GameBoardModel) Move(input tcell.Key) (bool, bool) {
-	var tilt bool
-	var reverse bool
+	var tilt, reverse bool
 	switch input {
 	case tcell.KeyUp:
 		tilt = true
@@ -151,11 +160,6 @@ func (gbm *GameBoardModel) mergeAdjacentHorizontal(reverse bool) bool {
 
 				gbm.Gb[y][x+op] = gbm.Gb[y][x+op] << 1
 				gbm.Gb[y][x] = 0
-
-				if gbm.Gb[y][x+op] == 2048 {
-					gbm.HasWon = true
-				}
-
 				validMove = true
 
 			}
@@ -165,9 +169,10 @@ func (gbm *GameBoardModel) mergeAdjacentHorizontal(reverse bool) bool {
 	return validMove
 }
 
-func (gbm *GameBoardModel) AddNewTile() {
+// AddTile adds a new tile to the gameboard, if possible.
+func (gbm *GameBoardModel) AddTile() {
 	var emptyTiles []*int
-	value := 1 << 1
+	value := 2 << rand.Intn(2)
 	for y := 0; y <= 3; y++ {
 		for x := 0; x <= 3; x++ {
 			if gbm.Gb[y][x] == 0 {
@@ -177,59 +182,67 @@ func (gbm *GameBoardModel) AddNewTile() {
 	}
 
 	if len(emptyTiles) == 0 {
-		gbm.HasEmptyTile = false
 		return
 	}
 
 	*emptyTiles[rand.Intn(len(emptyTiles))] = value
-	gbm.HasEmptyTile = true
 }
 
-// Print prints the current game.
-func (gbm *GameBoardModel) Print() {
+func (gbm *GameBoardModel) Has2048Tile() bool {
 	for y := 0; y <= 3; y++ {
 		for x := 0; x <= 3; x++ {
-			fmt.Printf("| %4d ", gbm.Gb[y][x])
+			if gbm.Gb[y][x] == 2048 {
+				return true
+			}
 		}
-
-		if y == 3 {
-			fmt.Printf("| Score: %6d | ", gbm.Score)
-		} else {
-			fmt.Print("|               |")
-		}
-		fmt.Println()
 	}
+	return false
 }
 
-// CheckHas2048 checks if the gameboard has a 2048 tile.
-// func (gbm *GameBoardModel) CheckHas2048() {
-// 	for y := 0; y <= 3; y++ {
-// 		for x := 0; x <= 3; x++ {
-// 			if gbm.Gb[y][x] == 2048 {
-// 				gbm.HasWon = true
-// 				return
-// 			}
+func (gbm *GameBoardModel) HasEmptyTile() bool {
+	for y := 0; y <= 3; y++ {
+		for x := 0; x <= 3; x++ {
+			if gbm.Gb[y][x] == 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
 
-// 		}
-// 	}
-
-// }
-
-// checkIsMergable checks the gameboard for adjacent tiles that can be merged.
-func (gbm *GameBoardModel) CheckIsMergable() {
+// IsMergable checks the gameboard for adjacent tiles that can be merged.
+func (gbm *GameBoardModel) IsMergable() bool {
 	for y := 0; y <= 2; y++ {
 		for x := 0; x <= 2; x++ {
-			if gbm.Gb[y][x] == gbm.Gb[y][x+1] || gbm.Gb[y][x] == gbm.Gb[y+1][x] {
-				gbm.IsMergable = true
-				return
+			if gbm.Gb[y][x] != 0 && (gbm.Gb[y][x] == gbm.Gb[y][x+1] || gbm.Gb[y][x] == gbm.Gb[y+1][x]) {
+				return true
+
 			}
 		}
 	}
 
-	if gbm.Gb[3][3] == gbm.Gb[2][3] || gbm.Gb[3][3] == gbm.Gb[3][2] {
-		gbm.IsMergable = true
-		return
+	if gbm.Gb[3][3] != 0 && (gbm.Gb[3][3] == gbm.Gb[2][3] || gbm.Gb[3][3] == gbm.Gb[3][2]) {
+		return true
 	}
-	gbm.IsMergable = false
+	return false
+
+}
+
+// GetState returns the current State.
+func (gbm *GameBoardModel) GetState() State {
+
+	has2048 := gbm.Has2048Tile()
+	if has2048 {
+		return Won
+	}
+
+	hasEmptyTile := gbm.HasEmptyTile()
+	isMergable := gbm.IsMergable()
+
+	if !hasEmptyTile && !isMergable {
+		return Lost
+	}
+
+	return Ongoing
 
 }
